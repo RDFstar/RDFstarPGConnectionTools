@@ -1,2 +1,2 @@
 # RDFstarPGConnectionTools
-A collection of tools that the connect the RDF* model and Property Graphs.
+This software package extends [RDFstarTools](https://github.com/RDFstar/RDFstarTools) with a collection of command line tools and Java libraries that the connect the RDF* data model and Property Graphs.
