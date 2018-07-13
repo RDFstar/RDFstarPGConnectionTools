@@ -12,7 +12,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Scanner;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -38,7 +37,6 @@ public class PG2RDFStar
 		BufferedReader br = null;
 		List<Pair<String,String>> headers = new ArrayList<Pair<String,String>>();
 		
-		//TODO: here it is something wrong, dont know what since it is the code from the exjobb
 		CSVParser parser = CSVParser.parse(reader, CSVFormat.RFC4180.withIgnoreSurroundingSpaces().withDelimiter(delimiter));
 		
 		String prefixRow = null;
@@ -141,7 +139,7 @@ public class PG2RDFStar
 		headers.clear();
 		System.out.println("now reading edge file: ");
 		//Read one row at the time from edge file.
-		parser = CSVParser.parse(edgeFile, CSVFormat.RFC4180.withIgnoreSurroundingSpaces(false).withDelimiter(delimiter));
+		parser = CSVParser.parse(edgeReader, CSVFormat.RFC4180.withIgnoreSurroundingSpaces().withDelimiter(delimiter));
 		for (CSVRecord csvRecord : parser) {
 			ttlBlock = "";
 			if(first_row) //if first row it will be the header row which we save.
