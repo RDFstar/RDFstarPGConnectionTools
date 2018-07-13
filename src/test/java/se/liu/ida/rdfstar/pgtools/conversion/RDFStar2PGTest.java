@@ -39,6 +39,13 @@ public class RDFStar2PGTest
 	}
 
 	@Test
+	public void test() throws IOException
+	{
+		convertAndMakeOutputFiles("nothingnested.ttls", "outv1.csv", "oute1.csv");
+	}
+
+/*
+	@Test
 	public void noreification() throws IOException
 	{
 		convertAndMakeOutputFiles("noreification.ttls", "outv1.csv", "oute1.csv");
@@ -62,6 +69,7 @@ public class RDFStar2PGTest
 	{
 		convertAndMakeOutputFiles("onenestedandonenotnested.ttls", "outv4.csv", "oute4.csv");
 	}
+*/
 
 	
 	// ---- helpers ----
@@ -69,7 +77,8 @@ public class RDFStar2PGTest
 	protected TwoCSVs convertAndMakeOutputFiles( String filename, String outfileName1, String outfileName2) throws IOException {
 		
 		
-		final String fullFilename = "C:\\Users\\ebbli37\\Documents\\testfiles\\" + filename;
+//		final String fullFilename = "C:\\Users\\ebbli37\\Documents\\testfiles\\" + filename;
+		final String fullFilename = getClass().getResource("/TurtleStar/"+filename).getFile();
 
 //		final OutputStream fw1 = new FileOutputStream("C:\\Users\\ebbli37\\Documents\\" + outfileName1);
 		final ByteArrayOutputStream vos = new ByteArrayOutputStream();
@@ -83,6 +92,10 @@ public class RDFStar2PGTest
 		final String eResult = eos.toString();
 		vos.close();
 		eos.close();
+
+		// the following two lines may be uncommented for debugging purposes
+		//System.out.println(vResult);
+		//System.out.println(eResult);
 
 		final CSVFormat csvFormat = CSVFormat.RFC4180.withIgnoreSurroundingSpaces();
 
