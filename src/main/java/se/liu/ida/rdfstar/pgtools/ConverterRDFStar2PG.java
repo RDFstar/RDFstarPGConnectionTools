@@ -2,8 +2,9 @@ package se.liu.ida.rdfstar.pgtools;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 import org.apache.jena.atlas.lib.Lib;
 import org.apache.jena.shared.JenaException;
@@ -29,8 +30,8 @@ public class ConverterRDFStar2PG extends CmdGeneral
     protected ModLangParse modLangParse         = new ModLangParse();
     
     protected String inputFilename;
-    protected FileWriter fwVertices;
-    protected FileWriter fwEdges;
+    protected OutputStream outputVertices;
+    protected OutputStream outputEdges;
     protected boolean outStream1Opened = false;
     protected boolean outStream2Opened = false;
 
@@ -98,7 +99,7 @@ public class ConverterRDFStar2PG extends CmdGeneral
             }
 
             try {
-            	fwVertices = new FileWriter(outputFile1);
+            	outputVertices = new FileOutputStream(outputFile1);
             	outStream1Opened = true;
             }
             catch ( FileNotFoundException e ) {
@@ -126,7 +127,7 @@ public class ConverterRDFStar2PG extends CmdGeneral
                 }
 
                 try {
-                	fwEdges = new FileWriter(outputFile2);
+                	outputEdges = new FileOutputStream(outputFile2);
                 	outStream2Opened = true;
                 }
                 catch ( FileNotFoundException e ) {
@@ -147,7 +148,7 @@ public class ConverterRDFStar2PG extends CmdGeneral
     	try {
     		
     		final RDFStar2PG converter = new RDFStar2PG();
-    		converter.convert(inputFilename, fwVertices, fwEdges);
+    		converter.convert(inputFilename, outputVertices, outputEdges);
     	}
         catch (ARQInternalErrorException intEx)
         {
@@ -175,8 +176,8 @@ public class ConverterRDFStar2PG extends CmdGeneral
 
     		if ( outStream1Opened && outStream2Opened ) {
     			try {
-    				fwVertices.close();
-    				fwEdges.close();
+    				outputVertices.close();
+    				outputEdges.close();
     			}
     			catch ( IOException e ) {
     				throw new CmdException("Closing the output stream failed: " + e.getMessage(), e );

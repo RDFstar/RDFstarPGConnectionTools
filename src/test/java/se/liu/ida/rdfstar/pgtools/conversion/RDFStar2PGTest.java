@@ -5,9 +5,15 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.FileWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -60,16 +66,41 @@ public class RDFStar2PGTest
 	
 	// ---- helpers ----
 
-	protected void convertAndMakeOutputFiles( String filename, String outfileName1, String outfileName2) throws IOException {
+	protected TwoCSVs convertAndMakeOutputFiles( String filename, String outfileName1, String outfileName2) throws IOException {
 		
 		
 		final String fullFilename = "C:\\Users\\ebbli37\\Documents\\testfiles\\" + filename;
 
-		final FileWriter fw1 = new FileWriter("C:\\Users\\ebbli37\\Documents\\" + outfileName1);
-		final FileWriter fw2 = new FileWriter("C:\\Users\\ebbli37\\Documents\\" + outfileName2);
+//		final OutputStream fw1 = new FileOutputStream("C:\\Users\\ebbli37\\Documents\\" + outfileName1);
+		final ByteArrayOutputStream vos = new ByteArrayOutputStream();
+//		final OutputStream fw2 = new FileOutputStream("C:\\Users\\ebbli37\\Documents\\" + outfileName2);
+		final ByteArrayOutputStream eos = new ByteArrayOutputStream();
 
-		new RDFStar2PG().convert(fullFilename, fw1, fw2);
-		
+//		new RDFStar2PG().convert(fullFilename, fw1, fw2);
+		new RDFStar2PG().convert(fullFilename, vos, eos);
+
+		final String vResult = vos.toString();
+		final String eResult = eos.toString();
+		vos.close();
+		eos.close();
+
+		final CSVFormat csvFormat = CSVFormat.RFC4180.withIgnoreSurroundingSpaces();
+
+		final CSVParser csvParserV = CSVParser.parse(vResult, csvFormat);
+		final List<CSVRecord> vertexCSV = csvParserV.getRecords();
+		csvParserV.close();
+
+		final CSVParser csvParserE = CSVParser.parse(eResult, csvFormat);
+		final List<CSVRecord> edgeCSV = csvParserE.getRecords();
+		csvParserE.close();
+
+		return new TwoCSVs(vertexCSV, edgeCSV);
 	}
-	
+
+	static class TwoCSVs {
+		public final List<CSVRecord> vertexCSV;
+		public final List<CSVRecord> edgeCSV;
+		public TwoCSVs( List<CSVRecord> vCSV, List<CSVRecord> eCSV) { vertexCSV = vCSV; edgeCSV = eCSV; }
+	}
+
 }

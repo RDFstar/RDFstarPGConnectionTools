@@ -1,8 +1,9 @@
 package se.liu.ida.rdfstar.pgtools.conversion;
 
 import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +28,7 @@ import se.liu.ida.rdfstar.tools.parser.lang.LangTurtleStar;
  * 
  * @author Jesper Eriksson
  * @author Amir Hakim
- * @author Ebba Lindström
+ * @author Ebba Lindstrï¿½m
  */
 
 
@@ -56,7 +57,7 @@ public class RDFStar2PG
 	private static final String LABEL = "Label";
 	
 	
-	public void convert(String filename, FileWriter fwv, FileWriter fwe) throws IOException {
+	public void convert(String filename, OutputStream vout, OutputStream eout) throws IOException {
 		
 		LangTurtleStar.init();	
 		initLists();
@@ -91,14 +92,14 @@ public class RDFStar2PG
 		executor.shutdown();
 		
 		//Print to vertex file
-		BufferedWriter bw = new BufferedWriter(fwv);
-		printVertices(bw);
-		bw.close();
+		final BufferedWriter vw = new BufferedWriter( new OutputStreamWriter(vout) );
+		printVertices(vw);
+		vw.close();
 		
 		//Print to edge file
-		bw = new BufferedWriter(fwe);
-		printEdges(bw);
-		bw.close();
+		final BufferedWriter ew = new BufferedWriter( new OutputStreamWriter(eout) );
+		printEdges(ew);
+		ew.close();
 	}
 	
 	public static void printEdges(BufferedWriter bw) throws IOException
