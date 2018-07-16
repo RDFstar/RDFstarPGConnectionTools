@@ -22,7 +22,7 @@ import org.apache.commons.lang3.tuple.Pair;
 public class PG2RDFStar
 {
 	
-	private static char delimiter = '\0'; 
+	private static char delimiter = '|';
 	private static HashMap<String, Pair<String, String>> mappings = new HashMap<String, Pair<String, String>>();
 	private static ArrayList<String> printedPrefixes = new ArrayList<String>();
 	
