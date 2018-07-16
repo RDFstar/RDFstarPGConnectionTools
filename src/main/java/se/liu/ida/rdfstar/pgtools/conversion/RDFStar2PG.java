@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.jena.graph.Node;
@@ -35,13 +33,6 @@ import se.liu.ida.rdfstar.tools.parser.lang.LangTurtleStar;
 
 public class RDFStar2PG
 {
-	
-	private static HashMap<Node, String> vertexMap = new HashMap<Node, String>();
-	private static HashMap<Triple, ArrayList<Pair<Node, Node>>> edgeMap = new HashMap<Triple,ArrayList<Pair<Node, Node>>>();
-	private static long vertexId = 0;
-	private static long edgeId = 0;
-	private static List<String> edgeHeaders= new ArrayList<>();
-	private static List<String> edgeTypes = new ArrayList<>();
 	private final static Node node = NodeFactory.createLiteral("label");
 	//Chose name of default headers in vertex file (ID is used in both edge and vertex file):
 	private static final String ID = "ID";
@@ -55,41 +46,37 @@ public class RDFStar2PG
 	private static final String FROM = "From";
 	private static final String TO= "To";
 	private static final String LABEL = "Label";
-	
+
+	protected List<String> edgeHeaders;
+	protected List<String> edgeTypes;
+	protected long vertexId;
+	protected long edgeId;
+	protected HashMap<Node, String> vertexMap;
+	protected HashMap<Triple, ArrayList<Pair<Node, Node>>> edgeMap;
 	
 	public void convert(String filename, OutputStream vout, OutputStream eout) throws IOException {
 		
 		LangTurtleStar.init();	
 		initLists();
-		
+		vertexId = 0L;
+		edgeId   = 0L;
+		vertexMap = new HashMap<Node, String>();
+		edgeMap   = new HashMap<Triple,ArrayList<Pair<Node, Node>>>();
+
 		//creates iterator which we can stream the triples with on different threads.
 		PipedRDFIterator<Triple> iter = new PipedRDFIterator<>(16000);
 	    final PipedRDFStream<Triple> inputStream = new PipedTriplesStream(iter);
-		ExecutorService executor = Executors.newSingleThreadExecutor();
-		
-			  Runnable parser = new Runnable() {
-				  
-		            @Override
-		            public void run() {
-		            	
-		            	RDFParser.create()
-					       .labelToNode( LabelToNode.createUseLabelEncoded() )				  
-					       .source(filename)
-					       .checking(false)
-					       .build()
-					       .parse(inputStream);
-		            }
-		        };
-		 
-		executor.submit(parser);
+		RDFParser.create().labelToNode( LabelToNode.createUseLabelEncoded() )				  
+					      .source(filename)
+					      .checking(false)
+					      .build()
+					      .parse(inputStream);
 		
 		//Stream triples and process one by one.
 		while (iter.hasNext()) {	
 			Triple next = iter.next();
         	fillMaps(next);
 	     }
-		
-		executor.shutdown();
 		
 		//Print to vertex file
 		final BufferedWriter vw = new BufferedWriter( new OutputStreamWriter(vout) );
@@ -100,9 +87,12 @@ public class RDFStar2PG
 		final BufferedWriter ew = new BufferedWriter( new OutputStreamWriter(eout) );
 		printEdges(ew);
 		ew.close();
+
+		vertexMap = null;
+		edgeMap = null;
 	}
 	
-	public static void printEdges(BufferedWriter bw) throws IOException
+	protected void printEdges(BufferedWriter bw) throws IOException
 	{
 		//Print headers in edge file
 		for(int i = 0; i < edgeHeaders.size(); i++)
@@ -149,7 +139,7 @@ public class RDFStar2PG
 	
 	
 	//Print everything in the vertex file
-	public static void printVertices(BufferedWriter bw) throws IOException
+	protected void printVertices(BufferedWriter bw) throws IOException
 	{
 		//Print the headers first
 		bw.write(ID + ", "+ KIND + ", "+ LITERAL + ", "+ IRI+ ", "+ BLANK+ ", " + DATATYPE + ", " + LANGUAGE + "\n");
@@ -182,18 +172,18 @@ public class RDFStar2PG
 	}
 	
 	
-	public static String generateVertexId()
+	protected String generateVertexId()
 	{
 		return "v" +  ++vertexId;
 	}
 	
-	public static String generateEdgeId()
+	protected String generateEdgeId()
 	{
 		return "e" +  ++edgeId;
 	}
 	
 	
-	public static void updateVertexMap(Triple triple)
+	protected void updateVertexMap(Triple triple)
 	{
 		String id = null;
 	    String id2 = null;
@@ -215,14 +205,12 @@ public class RDFStar2PG
 	}
 	
 	
-	public static void fillMaps(Triple triple)
+	protected void fillMaps(Triple triple)
 	{
 		Node s = triple.getSubject();
 		Node p = triple.getPredicate();
         Node o = triple.getObject();
-       
-        
-        
+
         if( o instanceof Node_Triple )
         {
         	throw new IllegalArgumentException("Nested triple not allowed as object");
@@ -277,14 +265,16 @@ public class RDFStar2PG
        
 	}
 	
-	public static void initLists()
+	protected void initLists()
 	{
+		edgeHeaders = new ArrayList<String>();
 		edgeHeaders.add(ID);
 		edgeHeaders.add(FROM);
 		edgeHeaders.add(TO);
 		edgeHeaders.add(LABEL);
 		
 		//These types are attached to the four headers above (order matters)
+		edgeTypes = new ArrayList<String>();
 		edgeTypes.add("String");
 		edgeTypes.add("String");
 		edgeTypes.add("String");
