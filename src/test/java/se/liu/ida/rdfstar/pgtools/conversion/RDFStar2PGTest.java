@@ -9,6 +9,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.csv.CSVFormat;
@@ -22,12 +23,11 @@ import org.junit.Test;
 /**
  * 
  * @author Olaf Hartig
- * @author Ebba LindstrÃ¶m
+ * @author Ebba Lindström
  */
 
-//TODO: gives no error when creating files from all files except the one with double nested subject. 
-//Not sure how to continue testing the data, since I have not tested the actual output file more than just looking at it
 
+//TODO: gets no errors when testing one method at time, but when trying to test all of the methods at once it gets error
 public class RDFStar2PGTest
 {
 	@Before
@@ -38,64 +38,71 @@ public class RDFStar2PGTest
 	public void tearDown() {
 	}
 
+	
 	@Test
-	public void test() throws IOException
+	public void nothingNested() throws IOException
 	{
-		convertAndMakeOutputFiles("nothingnested.ttls", "outv1.csv", "oute1.csv");
-	}
-
-/*
-	@Test
-	public void noreification() throws IOException
-	{
-		convertAndMakeOutputFiles("noreification.ttls", "outv1.csv", "oute1.csv");
+		final TwoCSVs result = convertAndMakeCSVList("nothingnested.ttls");
+		
+		checkSizeofCSVs(3, 2, result);
+		checkRowsVertex(result);
+		checkRowsEdge(result);
 	}
 	
 	@Test
 	public void nestedsubject() throws IOException
 	{
-		convertAndMakeOutputFiles("nestedsubject.ttls", "outv2.csv", "oute2.csv");
+		final TwoCSVs result = convertAndMakeCSVList("nestedsubject.ttls");
+		
+		checkSizeofCSVs(3, 2, result);
+		checkRowsVertex(result);	
+		checkRowsEdge(result);
 	}
 	
 	//this one returns error at the moment, is it not possible to have a double nested subject in PG-conversion?
-	@Test
+	/*@Test
 	public void doublenestedsubject() throws IOException
 	{
-		convertAndMakeOutputFiles("doublenestedsubject.ttls", "outv3.csv", "oute3.csv");
+		final TwoCSVs result = convertAndMakeCSVList("doublenestedsubject.ttls");
+		
+		checkRowsVertex(result);
+		checkRowsEdge(result);
 	}
+	*/
 	
 	@Test
 	public void onenestedandonenotnested() throws IOException
 	{
-		convertAndMakeOutputFiles("onenestedandonenotnested.ttls", "outv4.csv", "oute4.csv");
+		final TwoCSVs result = convertAndMakeCSVList("onenestedandonenotnested.ttls");
+		
+		checkSizeofCSVs(5, 3, result);
+		checkRowsVertex(result);
+		checkRowsEdge(result);
 	}
-*/
+
 
 	
 	// ---- helpers ----
 
-	protected TwoCSVs convertAndMakeOutputFiles( String filename, String outfileName1, String outfileName2) throws IOException {
+	protected TwoCSVs convertAndMakeCSVList( String filename) throws IOException {
 		
 		
-//		final String fullFilename = "C:\\Users\\ebbli37\\Documents\\testfiles\\" + filename;
-		final String fullFilename = getClass().getResource("/TurtleStar/"+filename).getFile();
+		String fullFilename = getClass().getResource("/TurtleStar/"+filename).getFile();
 
-//		final OutputStream fw1 = new FileOutputStream("C:\\Users\\ebbli37\\Documents\\" + outfileName1);
-		final ByteArrayOutputStream vos = new ByteArrayOutputStream();
-//		final OutputStream fw2 = new FileOutputStream("C:\\Users\\ebbli37\\Documents\\" + outfileName2);
-		final ByteArrayOutputStream eos = new ByteArrayOutputStream();
 
-//		new RDFStar2PG().convert(fullFilename, fw1, fw2);
+		ByteArrayOutputStream vos = new ByteArrayOutputStream();
+		ByteArrayOutputStream eos = new ByteArrayOutputStream();
+
 		new RDFStar2PG().convert(fullFilename, vos, eos);
 
-		final String vResult = vos.toString();
-		final String eResult = eos.toString();
+		String vResult = vos.toString();
+		String eResult = eos.toString();
 		vos.close();
 		eos.close();
 
 		// the following two lines may be uncommented for debugging purposes
-		//System.out.println(vResult);
-		//System.out.println(eResult);
+		System.out.println(vResult);
+		System.out.println(eResult);
 
 		final CSVFormat csvFormat = CSVFormat.RFC4180.withIgnoreSurroundingSpaces();
 
@@ -109,11 +116,43 @@ public class RDFStar2PGTest
 
 		return new TwoCSVs(vertexCSV, edgeCSV);
 	}
+	
+	protected void checkSizeofCSVs(int vertexSize, int edgeSize, TwoCSVs result) {
+		assertEquals(result.vertexCSV.size(), vertexSize);
+		assertEquals(result.edgeCSV.size(), edgeSize);
+	}
+	
+	protected void checkRowsVertex(TwoCSVs result) {
+		boolean firstRowV = true;
+		Iterator<CSVRecord> vertexIter =  result.vertexCSV.iterator();
+		while (vertexIter.hasNext()) { 
+			String elem = vertexIter.next().get(0);
+			if (firstRowV) {
+				firstRowV = false;
+				assertEquals(elem, "ID");
+				continue;
+			}
+			assertEquals(elem.substring(0, 1), "v");
+		}
+	}
+	
+	protected void checkRowsEdge(TwoCSVs result) {
+		boolean firstRowV = true;
+		Iterator<CSVRecord> edgeIter =  result.edgeCSV.iterator();
+		while (edgeIter.hasNext()) { 
+			String elem = edgeIter.next().get(0);
+			if (firstRowV) {
+				firstRowV = false;
+				continue;
+			}
+			assertEquals(elem.substring(0, 1), "e");
+		}
+	}
 
 	static class TwoCSVs {
-		public final List<CSVRecord> vertexCSV;
-		public final List<CSVRecord> edgeCSV;
-		public TwoCSVs( List<CSVRecord> vCSV, List<CSVRecord> eCSV) { vertexCSV = vCSV; edgeCSV = eCSV; }
+		final List<CSVRecord> vertexCSV;
+		final List<CSVRecord> edgeCSV;
+		TwoCSVs( List<CSVRecord> vCSV, List<CSVRecord> eCSV) { vertexCSV = vCSV; edgeCSV = eCSV; }
 	}
 
 }
