@@ -1,0 +1,8 @@
+~id| name:String| age:Int| lang:String| datum:Date| ~label
+v1| 'marko' ;'polo'| 29 ;25| | | person
+v2|"lop"| | "ja,va"| | software
+v4| "citat teecken ""ser ut sa"| | | | hej 
+v3| fml| | "ja""g"";vi""ll ""test""; sova typ;nu"| | software
+v5| "Gunnar                   Stenson"| | | |1998-02-28|
+v6| 'marko' ;'polo'| 29 ;25| | | person
+v6| | | ensak| | 

@@ -59,16 +59,6 @@ public class RDFStar2PGTest
 		checkRowsEdge(result);
 	}
 	
-	//this one returns error at the moment, is it not possible to have a double nested subject in PG-conversion?
-	/*@Test
-	public void doublenestedsubject() throws IOException
-	{
-		final TwoCSVs result = convertAndMakeCSVList("doublenestedsubject.ttls");
-		
-		checkRowsVertex(result);
-		checkRowsEdge(result);
-	}
-	*/
 	
 	@Test
 	public void onenestedandonenotnested() throws IOException
@@ -79,7 +69,34 @@ public class RDFStar2PGTest
 		checkRowsVertex(result);
 		checkRowsEdge(result);
 	}
+	
+	@Test
+	public void nestedobject() throws IOException
+	{
+		 boolean thrown = false;
 
+		  try {
+			  convertAndMakeCSVList("nestedobject.ttls");
+		  } catch (IllegalArgumentException e) {
+		    thrown = true;
+		  }
+
+		  assertTrue(thrown);
+	}
+	
+	@Test
+	public void doublenestedsubject() throws IOException
+	{
+		 boolean thrown = false;
+
+		  try {
+			  convertAndMakeCSVList("doublenestedsubject.ttls");
+		  } catch (IllegalArgumentException e) {
+		    thrown = true;
+		  }
+
+		  assertTrue(thrown);
+	}
 
 	
 	// ---- helpers ----
@@ -88,7 +105,7 @@ public class RDFStar2PGTest
 		
 		
 		String fullFilename = getClass().getResource("/TurtleStar/"+filename).getFile();
-
+		System.out.println(fullFilename);
 
 		ByteArrayOutputStream vos = new ByteArrayOutputStream();
 		ByteArrayOutputStream eos = new ByteArrayOutputStream();
@@ -101,8 +118,8 @@ public class RDFStar2PGTest
 		eos.close();
 
 		// the following two lines may be uncommented for debugging purposes
-		System.out.println(vResult);
-		System.out.println(eResult);
+		//System.out.println(vResult);
+		//System.out.println(eResult);
 
 		final CSVFormat csvFormat = CSVFormat.RFC4180.withIgnoreSurroundingSpaces();
 

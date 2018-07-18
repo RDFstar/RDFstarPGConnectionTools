@@ -3,8 +3,8 @@ package se.liu.ida.rdfstar.pgtools;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 
 import org.apache.jena.atlas.lib.Lib;
 import org.apache.jena.shared.JenaException;
@@ -23,7 +23,6 @@ import se.liu.ida.rdfstar.pgtools.conversion.PG2RDFStar;
  * @author Olaf Hartig
  */
 
-//TODO: gives no errors, but the outfile only consists of one prefix and nothing more. Also have no idea where it gets the prefix from? (did not use a prefix file when testing)
 
 public class ConverterPG2RDFStar extends CmdGeneral
 {
@@ -34,7 +33,7 @@ public class ConverterPG2RDFStar extends CmdGeneral
     
     protected String inputFileVertex;
     protected String inputFileEdge;
-    protected FileWriter fw;
+    protected OutputStream os;
     protected String prefixFilename = null;
     protected boolean outStreamOpened = false;
 
@@ -125,15 +124,13 @@ public class ConverterPG2RDFStar extends CmdGeneral
             }
 
             try {
-            	fw = new FileWriter(outputFile);
+            	os = new FileOutputStream(outputFile);
             	outStreamOpened = true;
             }
             catch ( FileNotFoundException e ) {
             	cmdError("The created output file does not exist");
-            	
-            } catch (IOException e) {
-            	cmdError("Writing to the output file failed: " + e.getMessage() );
-			}   	
+            }
+
     }
     
 
@@ -146,7 +143,7 @@ public class ConverterPG2RDFStar extends CmdGeneral
     	try {
     		
     		final PG2RDFStar converter = new PG2RDFStar();
-    		converter.convert(inputFileVertex, inputFileEdge, fw, prefixFilename);
+    		converter.convert(inputFileVertex, inputFileEdge, os, prefixFilename);
     	}
         catch (ARQInternalErrorException intEx)
         {
@@ -174,7 +171,7 @@ public class ConverterPG2RDFStar extends CmdGeneral
 
     		if ( outStreamOpened ) {
     			try {
-    				fw.close();
+    				os.close();
     			}
     			catch ( IOException e ) {
     				throw new CmdException("Closing the output stream failed: " + e.getMessage(), e );
