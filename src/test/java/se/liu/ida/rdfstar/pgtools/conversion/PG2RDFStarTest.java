@@ -36,29 +36,34 @@ public class PG2RDFStarTest
 	@Test
 	public void todoWriteTests() throws IOException
 	{
-		createGraphFromCSVFiles("test.csv", "etest.csv");
+		final Graph g = createGraphFromCSVFiles("test.csv", "etest.csv", null);
 
 	}
 
-//---------helper methods-------------
-	
-	protected Graph createGraphFromCSVFiles(String filenameV, String filenameE) throws IOException {
-		
+
+	//---------helper methods-------------
+
+	protected Graph createGraphFromCSVFiles(String filenameV, String filenameE, String filenamePrefixes) throws IOException
+	{
 		final String fullFilenameV = getClass().getResource("/CSVFiles/"+filenameV).getFile();
 		final String fullFilenameE = getClass().getResource("/CSVFiles/"+filenameE).getFile();
-		
+
+		final String fullFilenameP;
+		if ( filenamePrefixes != null )
+			fullFilenameP = getClass().getResource("/CSVFiles/"+filenamePrefixes).getFile();
+		else
+			fullFilenameP = null;
+
 		final ByteArrayOutputStream os = new ByteArrayOutputStream();
-		
-		new PG2RDFStar().convert(fullFilenameV, fullFilenameE, os, null);
-		
-		String result = os.toString();
-		
+
+		new PG2RDFStar().convert(fullFilenameV, fullFilenameE, os, fullFilenameP);
+
+		final String result = os.toString();
+
 		System.out.println(result);
-		
-		Graph g = LangTurtleStarTest.createGraphFromTurtleStarSnippet(result);
-		
+
+		final Graph g = LangTurtleStarTest.createGraphFromTurtleStarSnippet(result);
 		return g;
-	
 	}
 	
 }
