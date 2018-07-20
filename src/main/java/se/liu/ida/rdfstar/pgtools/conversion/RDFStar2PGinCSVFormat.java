@@ -31,7 +31,7 @@ import se.liu.ida.rdfstar.tools.parser.lang.LangTurtleStar;
 
 
 
-public class RDFStar2PG
+public class RDFStar2PGinCSVFormat
 {
 	private final static Node node = NodeFactory.createLiteral("label");
 	//Chose name of default headers in vertex file (ID is used in both edge and vertex file):

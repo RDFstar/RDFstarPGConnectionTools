@@ -23,7 +23,7 @@ import org.junit.Test;
  */
 
 
-public class RDFStar2PGTest
+public class RDFStar2PGinCSVFormatTest
 {
 	@Before
 	public void setup() {
@@ -103,7 +103,7 @@ public class RDFStar2PGTest
 		ByteArrayOutputStream vos = new ByteArrayOutputStream();
 		ByteArrayOutputStream eos = new ByteArrayOutputStream();
 
-		new RDFStar2PG().convert(fullFilename, vos, eos);
+		new RDFStar2PGinCSVFormat().convert(fullFilename, vos, eos);
 
 		String vResult = vos.toString();
 		String eResult = eos.toString();

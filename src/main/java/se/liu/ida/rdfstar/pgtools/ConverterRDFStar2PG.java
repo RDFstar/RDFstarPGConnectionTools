@@ -14,7 +14,7 @@ import arq.cmdline.ModLangParse;
 import arq.cmdline.ModTime;
 import jena.cmd.CmdException;
 import jena.cmd.CmdGeneral;
-import se.liu.ida.rdfstar.pgtools.conversion.RDFStar2PG;
+import se.liu.ida.rdfstar.pgtools.conversion.RDFStar2PGinCSVFormat;
 
 
 
@@ -147,7 +147,7 @@ public class ConverterRDFStar2PG extends CmdGeneral
     {
     	try {
     		
-    		final RDFStar2PG converter = new RDFStar2PG();
+    		final RDFStar2PGinCSVFormat converter = new RDFStar2PGinCSVFormat();
     		converter.convert(inputFilename, outputVertices, outputEdges);
     	}
         catch (ARQInternalErrorException intEx)
