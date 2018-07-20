@@ -45,9 +45,9 @@ public class PG2RDFStarTest
 
 	protected Graph createGraphFromCSVFiles(String filenameV, String filenameE, String filenamePrefixes) throws IOException
 	{
-		final String fullFilenameV = getClass().getResource("/CSVFiles/"+filenameV).getFile();
-		final String fullFilenameE = getClass().getResource("/CSVFiles/"+filenameE).getFile();
-
+		final String fullFilenameV = getClass().getResource("/CSVFiles/"+filenameV).getFile().substring(1);
+		final String fullFilenameE = getClass().getResource("/CSVFiles/"+filenameE).getFile().substring(1);
+System.out.println(fullFilenameE);
 		final String fullFilenameP;
 		if ( filenamePrefixes != null )
 			fullFilenameP = getClass().getResource("/CSVFiles/"+filenamePrefixes).getFile();
