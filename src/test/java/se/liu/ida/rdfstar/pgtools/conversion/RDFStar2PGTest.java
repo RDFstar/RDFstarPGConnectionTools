@@ -19,7 +19,7 @@ import org.junit.Test;
 /**
  * 
  * @author Olaf Hartig
- * @author Ebba Lindström
+ * @author Ebba Lindstrï¿½m
  */
 
 
@@ -97,8 +97,7 @@ public class RDFStar2PGTest
 	// ---- helpers ----
 
 	protected TwoCSVs convertAndMakeCSVList( String filename) throws IOException {
-		
-		
+
 		String fullFilename = getClass().getResource("/TurtleStar/"+filename).getFile();
 
 		ByteArrayOutputStream vos = new ByteArrayOutputStream();
@@ -110,9 +109,10 @@ public class RDFStar2PGTest
 		String eResult = eos.toString();
 		vos.close();
 		eos.close();
-		
-		System.out.println(vResult);
-		System.out.println(eResult);
+
+		// the following two lines can be uncommented for debugging purposes
+		//System.out.println(vResult);
+		//System.out.println(eResult);
 
 		final CSVFormat csvFormat = CSVFormat.RFC4180.withIgnoreSurroundingSpaces();
 
@@ -128,34 +128,37 @@ public class RDFStar2PGTest
 	}
 	
 	protected void checkSizeofCSVs(int vertexSize, int edgeSize, TwoCSVs result) {
-		assertEquals(result.vertexCSV.size(), vertexSize);
-		assertEquals(result.edgeCSV.size(), edgeSize);
+		assertEquals(vertexSize, result.vertexCSV.size());
+		assertEquals(edgeSize, result.edgeCSV.size());
 	}
 	
 	protected void checkRowsVertex(TwoCSVs result) {
-		boolean firstRowV = true;
-		Iterator<CSVRecord> vertexIter =  result.vertexCSV.iterator();
-		while (vertexIter.hasNext()) { 
-			String elem = vertexIter.next().get(0);
-			if (firstRowV) {
-				firstRowV = false;
-				assertEquals(elem, "ID");
-				continue;
-			}
-			assertEquals(elem.substring(0, 1), "v");
+		final Iterator<CSVRecord> vertexIter = result.vertexCSV.iterator();
+
+		// first row
+		final CSVRecord row1 = vertexIter.next();
+		assertEquals("ID", row1.get(0));
+
+		// other rows
+		while (vertexIter.hasNext()) {
+			final CSVRecord row = vertexIter.next();
+			final String elem = row.get(0);
+			assertEquals("v", elem.substring(0, 1));
 		}
 	}
-	
+
 	protected void checkRowsEdge(TwoCSVs result) {
-		boolean firstRowV = true;
-		Iterator<CSVRecord> edgeIter =  result.edgeCSV.iterator();
+		final Iterator<CSVRecord> edgeIter = result.edgeCSV.iterator();
+
+		// first row
+		final CSVRecord row1 = edgeIter.next();
+		assertEquals("ID:String", row1.get(0));
+
+		// other rows
 		while (edgeIter.hasNext()) { 
-			String elem = edgeIter.next().get(0);
-			if (firstRowV) {
-				firstRowV = false;
-				continue;
-			}
-			assertEquals(elem.substring(0, 1), "e");
+			final CSVRecord row = edgeIter.next();
+			final String elem = row.get(0);
+			assertEquals("e", elem.substring(0, 1));
 		}
 	}
 
