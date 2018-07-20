@@ -1,14 +1,10 @@
 package se.liu.ida.rdfstar.pgtools.conversion;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.List;
 
@@ -27,7 +23,6 @@ import org.junit.Test;
  */
 
 
-//TODO: gets no errors when testing one method at time, but when trying to test all of the methods at once it gets error
 public class RDFStar2PGTest
 {
 	@Before
@@ -105,7 +100,6 @@ public class RDFStar2PGTest
 		
 		
 		String fullFilename = getClass().getResource("/TurtleStar/"+filename).getFile();
-		System.out.println(fullFilename);
 
 		ByteArrayOutputStream vos = new ByteArrayOutputStream();
 		ByteArrayOutputStream eos = new ByteArrayOutputStream();
@@ -116,10 +110,9 @@ public class RDFStar2PGTest
 		String eResult = eos.toString();
 		vos.close();
 		eos.close();
-
-		// the following two lines may be uncommented for debugging purposes
-		//System.out.println(vResult);
-		//System.out.println(eResult);
+		
+		System.out.println(vResult);
+		System.out.println(eResult);
 
 		final CSVFormat csvFormat = CSVFormat.RFC4180.withIgnoreSurroundingSpaces();
 

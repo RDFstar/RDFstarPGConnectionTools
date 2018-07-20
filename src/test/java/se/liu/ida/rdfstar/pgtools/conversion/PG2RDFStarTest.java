@@ -17,6 +17,7 @@ import org.apache.jena.graph.Graph;
 
 import se.liu.ida.rdfstar.tools.parser.lang.LangTurtleStarTest;
 
+
 /**
  * 
  * @author Olaf Hartig
@@ -35,7 +36,7 @@ public class PG2RDFStarTest
 	@Test
 	public void todoWriteTests() throws IOException
 	{
-		createGraphFromCSVFiles("v.csv", "e.csv");
+		createGraphFromCSVFiles("test.csv", "etest.csv");
 
 	}
 
@@ -43,9 +44,8 @@ public class PG2RDFStarTest
 	
 	protected Graph createGraphFromCSVFiles(String filenameV, String filenameE) throws IOException {
 		
-		final String fullFilenameV = getClass().getResource("/TurtleStar/"+filenameV).getFile();
-		System.out.println(fullFilenameV);
-		final String fullFilenameE = getClass().getResource("/TurtleStar/"+filenameE).getFile();
+		final String fullFilenameV = getClass().getResource("/CSVFiles/"+filenameV).getFile();
+		final String fullFilenameE = getClass().getResource("/CSVFiles/"+filenameE).getFile();
 		
 		final ByteArrayOutputStream os = new ByteArrayOutputStream();
 		
@@ -53,9 +53,12 @@ public class PG2RDFStarTest
 		
 		String result = os.toString();
 		
+		System.out.println(result);
+		
 		Graph g = LangTurtleStarTest.createGraphFromTurtleStarSnippet(result);
 		
 		return g;
+	
 	}
 	
 }
