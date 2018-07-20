@@ -1,0 +1,31 @@
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.com/> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+ex:raffa foaf:loves "1999-08-16"^^<http://www.w3.org/2001/XMLSchema#date> .
+ex:alice foaf:age "24"^^<http://www.w3.org/2001/XMLSchema#integer> ;
+         foaf:name "Alice the queen"^^<http://www.w3.org/2001/XMLSchema#string> .
+<<<http://nuda.se/tja> foaf:age ex:bob>> dct:source <http://example.net/listing.html> ;
+                                         dct:creator ex:crawlers ;
+                                         dct:naajs _:t .
+ex:coolio foaf:knows ex:cal .
+_:t foaf:name ex:coolio .
+ex:bob foaf:age "23.5"^^<http://www.w3.org/2001/XMLSchema#Decimal> ;
+       foaf:name "Bob"^^<http://www.w3.org/2001/XMLSchema#string> .
+<<_:p1 foaf:age ex:coolio>> dct:story ex:hampus .
+ex:jesper foaf:name "Jesper Eriksson"@se ;
+          foaf:age "25"^^<http://www.w3.org/2001/XMLSchema#integer> .
+ex:amir foaf:knows _:t .
+<<ex:jesper foaf:age "25"^^<http://www.w3.org/2001/XMLSchema#integer>>> rdf:test _:t .
+ex:amir foaf:name "Amir Hakim"^^<http://www.w3.org/2001/XMLSchema#string> .
+<<<http://nuda.se/tja> foaf:age ex:bob>> foaf:zup "Sture min gosse"^^<http://www.w3.org/2001/XMLSchema#string> .
+ex:jesper rdf:waddup <<ex:jesper foaf:age "25"^^<http://www.w3.org/2001/XMLSchema#integer>>> .
+ex:sista rdf:waddup <<ex:jesper foaf:age "25"^^<http://www.w3.org/2001/XMLSchema#integer>>> .
+<<ex:hasse foaf:age "Tjenare"^^<http://www.w3.org/2001/XMLSchema#string>>> ex:probability "0.8"^^<http://www.w3.org/2001/XMLSchema#decimal> ;
+                                                                           foaf:knows ex:fille .
+<<ex:jesper foaf:age "25"^^<http://www.w3.org/2001/XMLSchema#integer>>> foaf:knows <<<http://nuda.se/tja> foaf:age ex:bob>> ;
+                                                                        foaf:cool <<_:p1 foaf:age ex:coolio>> .
+<<<<<http://nuda.se/tja> foaf:age ex:bob>> foaf:age "12"^^<http://www.w3.org/2001/XMLSchema#integer>>> ex:likelyhood "0.5"^^<http://www.w3.org/2001/XMLSchema#decimal> .
+<<ex:jesper foaf:age "25"^^<http://www.w3.org/2001/XMLSchema#integer>>> foaf:knows <<<<<http://nuda.se/tja> foaf:age ex:bob>> foaf:age "12"^^<http://www.w3.org/2001/XMLSchema#integer>>> .

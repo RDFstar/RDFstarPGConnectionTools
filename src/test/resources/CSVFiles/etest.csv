@@ -1,0 +1,5 @@
+~id| ~from| ~to| ~label| weight:Double| oldest:Double| likes:String
+e1| v1| v2| created| 0.4| 0.8| 
+e2| v1| v2| friends| | 0.7;0.2| 
+e3| v2| v1| nagot| "bajs;kiss"| |coolio
+e4| v2| v1| ingenmeta| | |

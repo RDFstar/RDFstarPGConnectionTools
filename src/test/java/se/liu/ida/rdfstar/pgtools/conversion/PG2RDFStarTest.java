@@ -5,13 +5,18 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jena.graph.Graph;
 
 import se.liu.ida.rdfstar.tools.parser.lang.LangTurtleStarTest;
+
 
 /**
  * 
@@ -29,16 +34,36 @@ public class PG2RDFStarTest
 	}
 
 	@Test
-	public void todoWriteTests()
+	public void todoWriteTests() throws IOException
 	{
-		// TODO ...
+		final Graph g = createGraphFromCSVFiles("test.csv", "etest.csv", null);
 
-		// The following two lines are just to make sure that the additional
-		// Java libraries can be used. You can delete these lines later. --Olaf 
-		final CSVFormat test = CSVFormat.RFC4180;
-		final String test2 = StringUtils.SPACE;
-
-		LangTurtleStarTest.createGraphFromTurtleStarSnippet("...");
 	}
 
+
+	//---------helper methods-------------
+
+	protected Graph createGraphFromCSVFiles(String filenameV, String filenameE, String filenamePrefixes) throws IOException
+	{
+		final String fullFilenameV = getClass().getResource("/CSVFiles/"+filenameV).getFile();
+		final String fullFilenameE = getClass().getResource("/CSVFiles/"+filenameE).getFile();
+
+		final String fullFilenameP;
+		if ( filenamePrefixes != null )
+			fullFilenameP = getClass().getResource("/CSVFiles/"+filenamePrefixes).getFile();
+		else
+			fullFilenameP = null;
+
+		final ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+		new PG2RDFStar().convert(fullFilenameV, fullFilenameE, os, fullFilenameP);
+
+		final String result = os.toString();
+
+		System.out.println(result);
+
+		final Graph g = LangTurtleStarTest.createGraphFromTurtleStarSnippet(result);
+		return g;
+	}
+	
 }
