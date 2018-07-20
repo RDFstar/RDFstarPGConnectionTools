@@ -35,7 +35,7 @@ public class ConverterPG2RDFStar extends CmdGeneral
     protected ArgDecl argPrefixFile    = new ArgDecl(ArgDecl.HasValue, "prefix", "prefixfile", "prefixinfile");
     protected ArgDecl argOutputFile    = new ArgDecl(ArgDecl.HasValue, "out", "output", "outfile", "outputfile");
     protected ArgDecl argVertexFile    = new ArgDecl(ArgDecl.HasValue, "vertexfile");
-    protected ArgDecl argEdgeFile    = new ArgDecl(ArgDecl.HasValue, "edgefile");
+    protected ArgDecl argEdgeFile      = new ArgDecl(ArgDecl.HasValue, "edgefile");
     
     protected String inputFileVertex;
     protected String inputFileEdge;
@@ -54,18 +54,17 @@ public class ConverterPG2RDFStar extends CmdGeneral
 
     	super.addModule(modTime);
     	super.addModule(modLangParse);
-    	
+
         super.getUsage().startCategory("Output options");
         super.add(argOutputFile, "--out", "Output file (optional, printing to stdout if omitted)");
-        
+
         super.getUsage().startCategory("Input files");
-        super.add(argVertexFile, "--vertexfile", "CSV-file containing the vertex data");
-        super.add(argEdgeFile, "--edgefile", "CSV-file containing the edge data");
+        super.add(argVertexFile, "--vertexfile", "CSV file containing the vertex data");
+        super.add(argEdgeFile, "--edgefile", "CSV file containing the edge data");
         super.add(argPrefixFile, "--prefixfile", "Prefix file (optional)");
-  
     }
-    
-    static String usage = ConverterPG2RDFStar.class.getName() + " [--time] [--check|--noCheck] [--sink] [--base=IRI] [--prefixfile=file] [--out=file] [--vertexfile=file] [--edgefile=file]";
+
+    static String usage = ConverterPG2RDFStar.class.getName() + " [--time] [--check|--noCheck] [--sink] [--base=IRI] [--prefixfile=file] [--out=file] --vertexfile=file --edgefile=file";
 
     @Override
     protected String getSummary()
