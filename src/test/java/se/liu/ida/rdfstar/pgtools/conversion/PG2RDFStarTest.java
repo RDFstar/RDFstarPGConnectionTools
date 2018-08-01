@@ -7,6 +7,7 @@ import static org.junit.Assert.fail;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Iterator;
 
 import org.junit.After;
 import org.junit.Before;
@@ -14,6 +15,9 @@ import org.junit.Test;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node_Triple;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.vocabulary.RDF;
 
 import se.liu.ida.rdfstar.tools.parser.lang.LangTurtleStarTest;
 
@@ -34,10 +38,49 @@ public class PG2RDFStarTest
 	}
 
 	@Test
-	public void todoWriteTests() throws IOException
+	public void noMetadata() throws IOException
 	{
-		final Graph g = createGraphFromCSVFiles("test.csv", "etest.csv", null);
+		final Graph g = createGraphFromCSVFiles("vtest1.csv", "etest1.csv", null);
 
+		assertEquals( 6, g.size() );
+		checkNestedTriples(g, 0);
+
+	}
+	
+	@Test
+	public void metadata() throws IOException
+	{
+		final Graph g = createGraphFromCSVFiles("vtest1.csv", "etest2.csv", null);
+
+		assertEquals( 7, g.size() );
+		checkNestedTriples(g, 2);
+	}
+	
+	@Test
+	public void test3() throws IOException
+	{
+		final Graph g = createGraphFromCSVFiles("vtest1.csv", "etest3.csv", null);
+
+		assertEquals( 7, g.size() );
+		checkNestedTriples(g, 2);
+	}
+	
+	@Test
+	public void biggerGraph() throws IOException
+	{
+		final Graph g = createGraphFromCSVFiles("vtest2.csv", "etest4.csv", null);
+
+		assertEquals( 12, g.size() );
+		checkNestedTriples(g, 4);
+	}
+	
+	@Test
+	public void differentOrderColumns() throws IOException
+	{
+		final Graph g = createGraphFromCSVFiles("vtest3.csv", "etest5.csv", null);
+
+		assertEquals( 7, g.size() );
+		checkNestedTriples(g, 2);
 	}
 
 
@@ -47,7 +90,6 @@ public class PG2RDFStarTest
 	{
 		final String fullFilenameV = getClass().getResource("/CSVFiles/"+filenameV).getFile().substring(1);
 		final String fullFilenameE = getClass().getResource("/CSVFiles/"+filenameE).getFile().substring(1);
-System.out.println(fullFilenameE);
 		final String fullFilenameP;
 		if ( filenamePrefixes != null )
 			fullFilenameP = getClass().getResource("/CSVFiles/"+filenamePrefixes).getFile();
@@ -64,6 +106,21 @@ System.out.println(fullFilenameE);
 
 		final Graph g = LangTurtleStarTest.createGraphFromTurtleStarSnippet(result);
 		return g;
+	}
+	
+	protected void checkNestedTriples(Graph g, int estimatedNumberOfNestedTriples) {
+		int nestedTriples = 0;
+		final Iterator<Triple> iter = g.find();
+		
+		while (iter.hasNext()) {
+			final Triple t = iter.next();
+			if (t.getSubject() instanceof Node_Triple) {
+				nestedTriples ++;
+			}
+			assertFalse( t.getPredicate() instanceof Node_Triple );
+			assertFalse( t.getObject() instanceof Node_Triple );
+		}
+		assertEquals(estimatedNumberOfNestedTriples, nestedTriples);
 	}
 	
 }

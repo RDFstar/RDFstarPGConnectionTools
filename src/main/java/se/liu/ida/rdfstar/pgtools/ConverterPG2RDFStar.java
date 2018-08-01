@@ -5,10 +5,12 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 
 import org.apache.jena.Jena;
 import org.apache.jena.atlas.lib.Lib;
 import org.apache.jena.query.ARQ;
+import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RIOT;
 import org.apache.jena.shared.JenaException;
 import org.apache.jena.sparql.ARQInternalErrorException;
@@ -19,6 +21,11 @@ import jena.cmd.ArgDecl;
 import jena.cmd.CmdException;
 import jena.cmd.CmdGeneral;
 import se.liu.ida.rdfstar.pgtools.conversion.PG2RDFStar;
+import se.liu.ida.rdfstar.pgtools.conversion.TinkerpopPG2RDFStar;
+
+import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.io.IoCore;
+import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 
 /**
  * 
@@ -36,12 +43,15 @@ public class ConverterPG2RDFStar extends CmdGeneral
     protected ArgDecl argOutputFile    = new ArgDecl(ArgDecl.HasValue, "out", "output", "outfile", "outputfile");
     protected ArgDecl argVertexFile    = new ArgDecl(ArgDecl.HasValue, "vertexfile");
     protected ArgDecl argEdgeFile      = new ArgDecl(ArgDecl.HasValue, "edgefile");
+    protected ArgDecl argGraphMLFile   = new ArgDecl(ArgDecl.HasValue, "graphmlfile");
     
     protected String inputFileVertex;
     protected String inputFileEdge;
+    protected String inputFileGraphML;
     protected OutputStream os;
     protected String prefixFilename = null;
     protected boolean outStreamOpened = false;
+    protected boolean tinkerpopFileGiven;
 
     public static void main(String... argv)
     {
@@ -58,20 +68,22 @@ public class ConverterPG2RDFStar extends CmdGeneral
         super.getUsage().startCategory("Output options");
         super.add(argOutputFile, "--out", "Output file (optional, printing to stdout if omitted)");
 
-        super.getUsage().startCategory("Input files");
+        super.getUsage().startCategory("Input files, CSV");
         super.add(argVertexFile, "--vertexfile", "CSV file containing the vertex data");
         super.add(argEdgeFile, "--edgefile", "CSV file containing the edge data");
         super.add(argPrefixFile, "--prefixfile", "Prefix file (optional)");
+        
+        super.getUsage().startCategory("Input file, GraphML");
+        super.add(argGraphMLFile, "--graphmlfile", "CSV file containing the vertex data");
     }
 
-    static String usage = ConverterPG2RDFStar.class.getName() + " [--time] [--check|--noCheck] [--sink] [--base=IRI] [--prefixfile=file] [--out=file] --vertexfile=file --edgefile=file";
+    static String usage = ConverterPG2RDFStar.class.getName() + " [--time] [--check|--noCheck] [--sink] [--base=IRI] [--prefixfile=file] [--out=file] [--vertexfile=file] [--edgefile=file] [--graphmlfile=file]";
 
     @Override
     protected String getSummary()
     {
         return usage;
     }
-    
     
     @Override
     protected void processModulesAndArgs()
@@ -92,14 +104,32 @@ public class ConverterPG2RDFStar extends CmdGeneral
             }
         }
 
-
-        // check whether the vertex input file actually exists and is indeed a file
-        
+        // check if there is CSV files specified, else check for the GraphML file
         final String vertexFilename = getValue(argVertexFile);
-        if ( vertexFilename == null ) {
-        	cmdError("No input file for vertices specified");
+        final String edgeFilename = getValue(argEdgeFile);
+        if ( vertexFilename == null && edgeFilename == null) {
+        	final String graphmlFilename = getValue(argGraphMLFile);
+        	if (graphmlFilename == null) {
+        		cmdError("no input files specified");
+        	}
+        	
+        	//process GraphML file
+        	else {
+        		tinkerpopFileGiven = true;
+            	this.inputFileGraphML = graphmlFilename;
+            	final File inputFile = new File(graphmlFilename); 
+                if ( ! inputFile.exists() ) {
+                	cmdError("The given input file does not exist");
+                } 
+                if ( ! inputFile.isFile() ) {
+                	cmdError("The given input file is not a file");
+                }    		
+        	}
         }
-        else {
+        
+        else if (vertexFilename != null && edgeFilename != null){
+        	tinkerpopFileGiven = false;
+        	//process vertex file
         	this.inputFileVertex = vertexFilename;
         	final File inputFilev = new File(vertexFilename); 
             if ( ! inputFilev.exists() ) {
@@ -108,16 +138,7 @@ public class ConverterPG2RDFStar extends CmdGeneral
             if ( ! inputFilev.isFile() ) {
             	cmdError("The given input file for the vertices is not a file");
             }
-        }
-        
-        
-        // check whether the edge input file actually exists and is indeed a file
-        
-        final String edgeFilename = getValue(argEdgeFile);
-        if ( edgeFilename == null ) {
-        	cmdError("No input file for edges specified");
-        }
-        else {
+            //process edge file
         	this.inputFileEdge = edgeFilename;
         	final File inputFilee = new File(edgeFilename); 
             if ( ! inputFilee.exists() ) {
@@ -128,27 +149,29 @@ public class ConverterPG2RDFStar extends CmdGeneral
             }
         }
         
+        else {
+        	cmdError("wrong input files given, needs to be either two CSV-files or one GraphML-file");
+        }
+        
         // initialize the output stream
         final String outFileName = getValue(argOutputFile);
-        if ( outFileName == null )
-        {
+        if ( outFileName == null ) {
         	os = System.out; // no output file specified, write to stdout instead
         }
-        else
-        {
+        
+        else {
+        	
             final File outputFile = new File( outFileName );
 
             if ( outputFile.exists() ) {
             		cmdError("The given output file already exist");
                 }
-
                 try {
                 	outputFile.createNewFile();
                 }
                 catch ( IOException e ) {
                 	cmdError("Creating the output file failed: " + e.getMessage() );
                 }
-
                 try {
                 	os = new FileOutputStream(outputFile);
                 	outStreamOpened = true;
@@ -166,6 +189,31 @@ public class ConverterPG2RDFStar extends CmdGeneral
     @Override
     protected void exec()
     {
+    	//convert using GraphML file and Tinkerpop2RDFStar converter
+        if (tinkerpopFileGiven) {
+    		final Graph newGraph = TinkerGraph.open();
+    		try {
+				newGraph.io(IoCore.graphml()).readGraph(inputFileGraphML);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+    		
+    		final TinkerpopPG2RDFStar converter = new TinkerpopPG2RDFStar();
+    		final org.apache.jena.graph.Graph g = converter.convert(newGraph);
+    		
+    		//TODO: figure out how to write the jena.Graph-object to ttls-format into osWriter
+    		
+    		
+    		OutputStreamWriter osWriter = new OutputStreamWriter(os);
+    		try {
+				osWriter.write(newGraph.toString());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+        }
+        
+        //convert using CSV files and PG2RDFStar converter
+        else {
     	try {
     		
     		final PG2RDFStar converter = new PG2RDFStar();
@@ -204,5 +252,5 @@ public class ConverterPG2RDFStar extends CmdGeneral
     		}
     	}
     }
-
+    }
 }

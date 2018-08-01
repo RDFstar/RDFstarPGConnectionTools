@@ -9,14 +9,16 @@ import java.io.OutputStream;
 import org.apache.jena.atlas.lib.Lib;
 import org.apache.jena.shared.JenaException;
 import org.apache.jena.sparql.ARQInternalErrorException;
+import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.io.IoCore;
 
 import arq.cmdline.ModLangParse;
 import arq.cmdline.ModTime;
+import jena.cmd.ArgDecl;
 import jena.cmd.CmdException;
 import jena.cmd.CmdGeneral;
 import se.liu.ida.rdfstar.pgtools.conversion.RDFStar2PGinCSVFormat;
-
-
+import se.liu.ida.rdfstar.pgtools.conversion.RDFStar2TinkerpopPG;
 
 
 /**
@@ -29,7 +31,16 @@ public class ConverterRDFStar2PG extends CmdGeneral
 	protected ModTime modTime                   = new ModTime();
     protected ModLangParse modLangParse         = new ModLangParse();
     
-    protected String inputFilename;
+    protected ArgDecl argInFile    = new ArgDecl(ArgDecl.HasValue, "infile");
+    protected ArgDecl argVertexFile    = new ArgDecl(ArgDecl.HasValue, "vertexoutfile");
+    protected ArgDecl argEdgeFile      = new ArgDecl(ArgDecl.HasValue, "edgeoutfile");
+    protected ArgDecl argGraphMLFile      = new ArgDecl(ArgDecl.HasValue, "graphmloutfile");
+    
+    protected String inFilename;
+    protected String vertexFilename;
+    protected String edgeFilename;
+    protected String graphMLFilename;
+    
     protected OutputStream outputVertices;
     protected OutputStream outputEdges;
     protected boolean outStream1Opened = false;
@@ -46,10 +57,12 @@ public class ConverterRDFStar2PG extends CmdGeneral
 
         super.addModule(modTime);
         super.addModule(modLangParse);
+        
+        
     }
     
     
-    static String usage = ConverterRDFStar2PG.class.getName() + " [--time] [--check|--noCheck] [--sink] [--base=IRI] infile vertexoutfile edgeoutfile";
+    static String usage = ConverterRDFStar2PG.class.getName() + " [--time] [--check|--noCheck] [--sink] [--base=IRI] [--infile=file] [--vertexoutfile=file] [--edgeoutfile=file] [--graphmloutfile=file]";
 
     @Override
     protected String getSummary()
@@ -62,81 +75,114 @@ public class ConverterRDFStar2PG extends CmdGeneral
     protected void processModulesAndArgs()
     {
         super.processModulesAndArgs();
-
-        if ( getNumPositional() == 0 ) {
-        	cmdError("No files specified");
-        }
-        else if ( getNumPositional() != 3 ) {
-        	cmdError("Given files cannot be interpreted");
-        }
-
-        inputFilename = getPositionalArg(0);
-
-        // check whether the input file actually exists and is indeed a file
-        final File inputFile = new File(inputFilename); 
-        if ( ! inputFile.exists() ) {
-        	cmdError("The given input file does not exist");
-        } 
-        if ( ! inputFile.isFile() ) {
-        	cmdError("The given input file is not a file");
-        }
-
-        // initialize the first output stream
-        final String outFileName1 = getPositionalArg(1);
         
-        final File outputFile1 = new File( outFileName1 );
-
-        // verify that the output file does not yet exist
-        if ( outputFile1.exists() ) {
-        		cmdError("The given output file (for the vertices) already exist");
+        //process input file
+        this.inFilename = getValue(argInFile); 
+        if (inFilename == null) {
+        	cmdError("no input file given");
+        }
+        
+        else {
+            final File inputFile = new File(inFilename); 
+            if ( ! inputFile.exists() ) {
+            	cmdError("The given input file does not exist");
+            } 
+            if ( ! inputFile.isFile() ) {
+            	cmdError("The given input file is not a file");
             }
+        	
+        }
+        
+        this.vertexFilename = getValue(argVertexFile);
+        this.edgeFilename = getValue(argEdgeFile);
+        if (vertexFilename == null && edgeFilename == null) {
+        	this.graphMLFilename = getValue(argGraphMLFile);
+        	if (graphMLFilename == null) {
+        		cmdError("no output file(s) given");
+        	}
+        	// process GraphML file
+        	else {
+        		
+        		
+        		// initialize the first output stream
+                final String outFileName1 = graphMLFilename;;
+                final File outputFile1 = new File( outFileName1 );
 
-            try {
-            	outputFile1.createNewFile();
-            }
-            catch ( IOException e ) {
-            	cmdError("Creating the output file (for the vertices) failed: " + e.getMessage() );
-            }
+                // verify that the output file does not yet exist
+                if ( outputFile1.exists() ) {
+                		cmdError("The given output file already exist");
+                    }
+                    try {
+                    	outputFile1.createNewFile();
+                    }
+                    catch ( IOException e ) {
+                    	cmdError("Creating the output file failed: " + e.getMessage() );
+                    }
+        	}
+        }
+        else {
+        	if (vertexFilename == null) {
+        		cmdError("no input file for the vertices given");
+        	}
+        	else if (edgeFilename == null) {
+        		cmdError("no input file for the edges given");
+        	}
+        	//process CSV files
+        	else {
 
-            try {
-            	outputVertices = new FileOutputStream(outputFile1);
-            	outStream1Opened = true;
-            }
-            catch ( FileNotFoundException e ) {
-            	cmdError("The created output file (for the vertices) does not exist");
-            	
-            } catch (IOException e) {
-            	cmdError("Writing to the output file (for the vertices) failed: " + e.getMessage() );
-			}
-            
-         // initialize the second output stream
-            final String outFileName2 = getPositionalArg(2);
-            
-            final File outputFile2 = new File( outFileName2 );
+                // initialize the first output stream
+                final String outFileName1 = vertexFilename;;
+                
+                final File outputFile1 = new File( outFileName1 );
 
-            // verify that the output file does not yet exist
-            if ( outputFile2.exists() ) {
-            		cmdError("The given output file (for the edges) already exist");
-                }
+                // verify that the output file does not yet exist
+                if ( outputFile1.exists() ) {
+                		cmdError("The given output file (for the vertices) already exist");
+                    }
 
-                try {
-                	outputFile2.createNewFile();
-                }
-                catch ( IOException e ) {
-                	cmdError("Creating the output file (for the edges) failed: " + e.getMessage() );
-                }
+                    try {
+                    	outputFile1.createNewFile();
+                    }
+                    catch ( IOException e ) {
+                    	cmdError("Creating the output file (for the vertices) failed: " + e.getMessage() );
+                    }
 
-                try {
-                	outputEdges = new FileOutputStream(outputFile2);
-                	outStream2Opened = true;
-                }
-                catch ( FileNotFoundException e ) {
-                	cmdError("The created output file (for the edges) does not exist");
-                	
-                } catch (IOException e) {
-					cmdError("Writing to the output file (for the edges) failed: " + e.getMessage() );
-				}      
-               
+                    try {
+                    	outputVertices = new FileOutputStream(outputFile1);
+                    	outStream1Opened = true;
+                    }
+                    catch ( FileNotFoundException e ) {
+                    	cmdError("The created output file (for the vertices) does not exist");
+                    	
+                    }
+                    
+                 // initialize the second output stream
+                    final String outFileName2 = edgeFilename;
+                    
+                    final File outputFile2 = new File( outFileName2 );
+
+                    // verify that the output file does not yet exist
+                    if ( outputFile2.exists() ) {
+                    		cmdError("The given output file (for the edges) already exist");
+                        }
+
+                        try {
+                        	outputFile2.createNewFile();
+                        }
+                        catch ( IOException e ) {
+                        	cmdError("Creating the output file (for the edges) failed: " + e.getMessage() );
+                        }
+
+                        try {
+                        	outputEdges = new FileOutputStream(outputFile2);
+                        	outStream2Opened = true;
+                        }
+                        catch ( FileNotFoundException e ) {
+                        	cmdError("The created output file (for the edges) does not exist");
+                        	
+                        }
+        	}
+        } 
     }
     
     @Override
@@ -145,10 +191,12 @@ public class ConverterRDFStar2PG extends CmdGeneral
     @Override
     protected void exec()
     {
+    	//outStreams mean that CSV is supposed to be converted
+    	if (outStream1Opened && outStream2Opened) {
     	try {
     		
     		final RDFStar2PGinCSVFormat converter = new RDFStar2PGinCSVFormat();
-    		converter.convert(inputFilename, outputVertices, outputEdges);
+    		converter.convert(inFilename, outputVertices, outputEdges);
     	}
         catch (ARQInternalErrorException intEx)
         {
@@ -184,5 +232,35 @@ public class ConverterRDFStar2PG extends CmdGeneral
     			}
     		}
     	}
+    	}
+    	//GraphML file is supposed to be converted
+    	else {
+    		final RDFStar2TinkerpopPG converter = new RDFStar2TinkerpopPG();
+    		Graph g = converter.convert(inFilename);
+    		
+    		try {
+    			
+				g.io(IoCore.graphml()).writeGraph(graphMLFilename);
+				
+			} catch (IOException e) {
+				
+				e.printStackTrace();
+			}
+    	}
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,4 @@
+~id | name:String| born:Date| age:Int| ~label 
+v1| Alice| 1998-10-05| 20| Person| v1
+v2| Bob| | 21| Person
+v3 |Ebba| 1996-10-01| 21| Person

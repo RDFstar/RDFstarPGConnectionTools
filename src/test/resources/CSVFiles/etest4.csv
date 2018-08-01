@@ -1,0 +1,4 @@
+~id| from| to| label| certainty:Double| created:Date 
+e1| v1| v2| knows| 0.8| 2018-04-02 
+e2| v1| v3| knows| | 2018-08-01 
+e1| v3| v2| knows| 0.2|

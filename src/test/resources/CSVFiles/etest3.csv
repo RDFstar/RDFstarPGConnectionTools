@@ -1,0 +1,3 @@
+~id| from| to| label| certainty:Double| created:Date 
+e1| v1| v2| mentioned| | 2018-04-02 
+e1| v2| v1| influencedBy| 0.8| 
