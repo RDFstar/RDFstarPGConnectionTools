@@ -3,7 +3,6 @@ package se.liu.ida.rdfstar.pgtools.conversion;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -12,12 +11,10 @@ import java.util.Iterator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node_Triple;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.riot.RiotException;
 
 import se.liu.ida.rdfstar.tools.parser.lang.LangTurtleStarTest;
 
@@ -77,10 +74,26 @@ public class PG2RDFStarTest
 	@Test
 	public void differentOrderColumns() throws IOException
 	{
-		final Graph g = createGraphFromCSVFiles("vtest3.csv", "etest5.csv", null);
+		
+		final String fullFilenameV = getClass().getResource("/CSVFiles/vtest3.csv").getFile().substring(1);
+		final String fullFilenameE = getClass().getResource("/CSVFiles/etest5.csv").getFile().substring(1);
+		String fullFilenameP = null;
 
-		assertEquals( 7, g.size() );
-		checkNestedTriples(g, 2);
+		final ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+		new PG2RDFStar().convert(fullFilenameV, fullFilenameE, os, fullFilenameP);
+
+		final String result = os.toString();
+		System.out.println(result);
+		
+		boolean thrown = false;
+
+		  try {		
+			LangTurtleStarTest.createGraphFromTurtleStarSnippet(result);
+		  } catch (RiotException e) {
+		    thrown = true;
+		  }
+		  assertTrue(thrown);
 	}
 
 

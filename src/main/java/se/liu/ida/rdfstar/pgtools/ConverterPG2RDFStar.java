@@ -5,15 +5,13 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 
-import org.apache.jena.Jena;
 import org.apache.jena.atlas.lib.Lib;
-import org.apache.jena.query.ARQ;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RIOT;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.riot.out.NodeToLabel;
 import org.apache.jena.shared.JenaException;
 import org.apache.jena.sparql.ARQInternalErrorException;
+import org.apache.jena.util.iterator.ExtendedIterator;
 
 import arq.cmdline.ModLangParse;
 import arq.cmdline.ModTime;
@@ -22,6 +20,7 @@ import jena.cmd.CmdException;
 import jena.cmd.CmdGeneral;
 import se.liu.ida.rdfstar.pgtools.conversion.PG2RDFStar;
 import se.liu.ida.rdfstar.pgtools.conversion.TinkerpopPG2RDFStar;
+import se.liu.ida.rdfstar.tools.serializer.SinkTripleStarOutput;
 
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.io.IoCore;
@@ -74,7 +73,7 @@ public class ConverterPG2RDFStar extends CmdGeneral
         super.add(argPrefixFile, "--prefixfile", "Prefix file (optional)");
         
         super.getUsage().startCategory("Input file, GraphML");
-        super.add(argGraphMLFile, "--graphmlfile", "CSV file containing the vertex data");
+        super.add(argGraphMLFile, "--graphmlfile", "GraphML file containing a Tinkerpop-graph");
     }
 
     static String usage = ConverterPG2RDFStar.class.getName() + " [--time] [--check|--noCheck] [--sink] [--base=IRI] [--prefixfile=file] [--out=file] [--vertexfile=file] [--edgefile=file] [--graphmlfile=file]";
@@ -97,10 +96,10 @@ public class ConverterPG2RDFStar extends CmdGeneral
         	this.prefixFilename = prefixFilename;
         	final File prefixFile = new File(prefixFilename); 
             if ( ! prefixFile.exists() ) {
-            	cmdError("The given input file for the vertices does not exist");
+            	cmdError("The given input file for the prefixes does not exist");
             } 
             if ( ! prefixFile.isFile() ) {
-            	cmdError("The given input file for the vertices is not a file");
+            	cmdError("The given input file for the prefixes is not a file");
             }
         }
 
@@ -115,11 +114,12 @@ public class ConverterPG2RDFStar extends CmdGeneral
         	
         	//process GraphML file
         	else {
+        		System.out.println(graphmlFilename);
         		tinkerpopFileGiven = true;
             	this.inputFileGraphML = graphmlFilename;
             	final File inputFile = new File(graphmlFilename); 
                 if ( ! inputFile.exists() ) {
-                	cmdError("The given input file does not exist");
+                	cmdError("The given input file for the Tinkerpop-graph does not exist");
                 } 
                 if ( ! inputFile.isFile() ) {
                 	cmdError("The given input file is not a file");
@@ -201,28 +201,26 @@ public class ConverterPG2RDFStar extends CmdGeneral
     		final TinkerpopPG2RDFStar converter = new TinkerpopPG2RDFStar();
     		final org.apache.jena.graph.Graph g = converter.convert(newGraph);
     		
-    		//TODO: figure out how to write the jena.Graph-object to ttls-format into osWriter
+    		SinkTripleStarOutput out = new SinkTripleStarOutput(os, null, NodeToLabel.createScopeByDocument());
     		
-    		
-    		OutputStreamWriter osWriter = new OutputStreamWriter(os);
-    		try {
-				osWriter.write(newGraph.toString());
-			} catch (IOException e) {
-				e.printStackTrace();
+    		ExtendedIterator<Triple> it = g.find();
+			while (it.hasNext()) {
+				Triple t = it.next();
+				out.send(t);
 			}
+			out.close();
         }
         
         //convert using CSV files and PG2RDFStar converter
         else {
-    	try {
-    		
-    		final PG2RDFStar converter = new PG2RDFStar();
-    		converter.convert(inputFileVertex, inputFileEdge, os, prefixFilename);
+        	try {
+        		final PG2RDFStar converter = new PG2RDFStar();
+        		converter.convert(inputFileVertex, inputFileEdge, os, prefixFilename);
     	}
-        catch (ARQInternalErrorException intEx)
-        {
-            System.err.println(intEx.getMessage()) ;
-            if ( intEx.getCause() != null )
+        	catch (ARQInternalErrorException intEx)
+        	{
+        		System.err.println(intEx.getMessage()) ;
+        		if ( intEx.getCause() != null )
             {
                 System.err.println("Cause:");
                 intEx.getCause().printStackTrace(System.err);
