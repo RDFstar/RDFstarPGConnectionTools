@@ -95,6 +95,31 @@ public class PG2RDFStarTest
 		  }
 		  assertTrue(thrown);
 	}
+	
+	@Test
+	public void prefixFileTest() throws IOException 
+	{
+		final String fullFilenameV = getClass().getResource("/CSVFiles/vtest3.csv").getFile().substring(1);
+		final String fullFilenameE = getClass().getResource("/CSVFiles/etest5.csv").getFile().substring(1);
+		String fullFilenameP = getClass().getResource("/CSVFiles/prefixfile1.txt").getFile().substring(1);
+		
+		final ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+		new PG2RDFStar().convert(fullFilenameV, fullFilenameE, os, fullFilenameP);
+
+		final String result = os.toString();
+		System.out.println(result);
+		
+		boolean thrown = false;
+
+		  try {		
+			LangTurtleStarTest.createGraphFromTurtleStarSnippet(result);
+		  } catch (RiotException e) {
+		    thrown = true;
+		  }
+		  assertTrue(thrown);
+		
+	}
 
 
 	//---------helper methods-------------
@@ -105,7 +130,7 @@ public class PG2RDFStarTest
 		final String fullFilenameE = getClass().getResource("/CSVFiles/"+filenameE).getFile().substring(1);
 		final String fullFilenameP;
 		if ( filenamePrefixes != null )
-			fullFilenameP = getClass().getResource("/CSVFiles/"+filenamePrefixes).getFile();
+			fullFilenameP = getClass().getResource("/CSVFiles/"+filenamePrefixes).getFile().substring(1);
 		else
 			fullFilenameP = null;
 

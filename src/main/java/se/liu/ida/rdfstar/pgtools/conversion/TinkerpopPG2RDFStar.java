@@ -1,4 +1,5 @@
 package se.liu.ida.rdfstar.pgtools.conversion;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import org.apache.jena.graph.Node;
@@ -6,7 +7,6 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Node_Triple;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.impl.SimpleGraphMaker;
-import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Property;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -28,6 +28,23 @@ public class TinkerpopPG2RDFStar {
 		vertexMap = new HashMap<Vertex, Node>();
 		
 		GraphTraversalSource traversal = pg.traversal();
+		
+		//check for edge uniqueness
+		ArrayList<ArrayList<Object>> edgeList = new ArrayList<ArrayList<Object>>();
+		Iterator<Edge> itE = traversal.E();
+		while (itE.hasNext()) {
+			Edge e = itE.next();
+			ArrayList<Object> edge = new ArrayList<Object>();
+			edge.add(e.label());
+			edge.add(e.inVertex());
+			edge.add(e.outVertex());
+			for (ArrayList<Object> list: edgeList) {
+				if (edge.equals(list)) {
+					throw new IllegalArgumentException("Cannot translate, input graph must be edge-unique");
+				}
+			}
+			edgeList.add(edge);
+		}
 		Iterator<Vertex> itV = traversal.V();
 		 while (itV.hasNext()) {
 			 Vertex v = itV.next();
@@ -46,9 +63,9 @@ public class TinkerpopPG2RDFStar {
 			 }
 		}
 		 
-		Iterator<Edge> itE = traversal.E();
-		while (itE.hasNext()) {
-			Edge e = itE.next();
+		Iterator<Edge> itE2 = traversal.E();
+		while (itE2.hasNext()) {
+			Edge e = itE2.next();
 			
 			//create triple using inVertex, outVertex and label from Tinkerpop-graph
 			Vertex inV = e.inVertex();
@@ -57,14 +74,6 @@ public class TinkerpopPG2RDFStar {
 			Node outNode = vertexMap.get(outV);
 			Node predicateNode = NodeFactory.createURI(e.label());
 			
-			//check for edge-uniqueness
-			ExtendedIterator<Triple> it = g.find();
-			while (it.hasNext()) {
-				Triple t = it.next();
-				if (t.sameAs(inNode, predicateNode, outNode)) {
-					throw new IllegalArgumentException("Cannot translate, input graph must be edge-unique");
-				}
-			}
 			Triple t = new Triple(inNode, predicateNode, outNode);
 			Iterator<Property<Object>> properties = e.properties();
 			//edge property means meta data to be translated to RDF*
@@ -75,15 +84,7 @@ public class TinkerpopPG2RDFStar {
 					Node p = NodeFactory.createURI(property.key());
 					Node o = NodeFactory.createLiteral(property.value().toString());
 					Triple nestedTriple = new Triple(metaTriple, p, o);
-					
-					//check for edge-uniqueness
-					ExtendedIterator<Triple> metaIt = g.find();
-					while (metaIt.hasNext()) {
-						Triple metaT = metaIt.next();
-						if (metaT.sameAs(metaTriple, p, o)) {
-							throw new IllegalArgumentException("Cannot translate, input graph must be edge-unique");
-						}
-					}
+
 					g.add(nestedTriple);
 				}
 			}

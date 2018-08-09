@@ -1,0 +1,3 @@
+1 name http://xmlns.com/foaf/0.1/ foaf: 
+2 age http://xmlns.com/foaf/0.1/ foaf: 
+3 creationDate http://example.org/ 

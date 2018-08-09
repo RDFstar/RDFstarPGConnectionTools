@@ -1,6 +1,7 @@
 package se.liu.ida.rdfstar.pgtools.conversion;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Optional;
 
@@ -12,7 +13,7 @@ import org.apache.jena.riot.lang.PipedRDFIterator;
 import org.apache.jena.riot.lang.PipedRDFStream;
 import org.apache.jena.riot.lang.PipedTriplesStream;
 import org.apache.jena.util.iterator.ExtendedIterator;
-
+import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -30,7 +31,7 @@ public class RDFStar2TinkerpopPG
 {
 	protected long vertexId;
 	protected long edgeId;
-	protected ArrayList<Node> NodeList;
+	protected ArrayList<Edge> edgeList = new ArrayList<Edge>();
 	
 	protected static final String ID = "ID";
 	protected static final String KIND = "Kind";
@@ -39,7 +40,6 @@ public class RDFStar2TinkerpopPG
 	protected static final String BLANK = "Blank";
 	
 	protected Graph pg;
-
 	
 	public Graph convert(String filename)
 	{
@@ -107,21 +107,54 @@ public class RDFStar2TinkerpopPG
 		        
 		      //checks if subject is blank or uri, and if vertex does not yet exist creates the new vertex
 	        	if (metaS.isBlank()) {
-	        		v1 = findOrCreateNew(BLANK, metaS.getBlankNodeLabel());
+	        		v1 = findOrCreateNewVertex(BLANK, metaS.getBlankNodeLabel());
 	        	}
 	        	else if (metaS.isURI()) {
-	        		v1 = findOrCreateNew(URI, metaS.getURI());
+	        		v1 = findOrCreateNewVertex(URI, metaS.getURI());
 	        	}
 		        
-	        	//checks the object to create an edge
+	        	//find or create new meta object
 		        if (metaO.isLiteral()) {
 		        	v2 = pg.addVertex(T.id, generateVertexId(), KIND, LITERAL, LITERAL, metaO.getLiteralLexicalForm());
 		        }
 		        else if (metaO.isURI()) {
-		        	v2 = findOrCreateNew(URI, metaO.getURI());
+		        	v2 = findOrCreateNewVertex(URI, metaO.getURI());
 		        }
-		        //add the predicate as edge in the graph, using the predicate as label
-		        v1.addEdge(metaP.toString(), v2, p.toString(), o.toString());
+		        
+		        else if (metaO.isBlank()) {
+		        	v2 = findOrCreateNewVertex(BLANK, metaO.getBlankNodeLabel());
+		        }
+
+	        	//find kind for object to correctly turn into string for edge property
+		        String objectValue = null;
+		        if (o.isLiteral()) {
+		        	objectValue = o.getLiteralLexicalForm();
+		        }
+		        else if (o.isURI()) {
+		        	objectValue = o.getURI();
+		        }
+		        
+		        else if (o.isBlank()) {
+		        	objectValue = o.getBlankNodeLabel();
+		        }
+		        
+		        GraphTraversalSource g = pg.traversal();
+		        boolean edgeAlreadyExist = g.V(v1).out(metaP.getURI()).is(v2).hasNext();
+		        
+		        //create edge if not already existing, else add property to existing edge
+		        if (! edgeAlreadyExist) {
+		        	Edge newEdge = v1.addEdge(metaP.getURI(), v2, p.getURI(), objectValue);
+		        	edgeList.add(newEdge);
+		        }
+		        else {
+		        	for (Edge e : edgeList) {
+		        		if (e.inVertex() == v1 && e.outVertex() == v2) {
+		        			if (e.label() == metaP.getURI()) {
+		        					e.property(p.getURI(), objectValue);
+		        				}
+		        			}
+		        	}
+		        }
 		      }
 	        
 	        //simple triple
@@ -129,27 +162,38 @@ public class RDFStar2TinkerpopPG
 	        {
 	        	//checks if subject is blank or uri, and if vertex does not yet exist creates the new vertex
 	        	if (s.isBlank()) {
-	        		v1 = findOrCreateNew(BLANK, s.getBlankNodeLabel());
+	        		v1 = findOrCreateNewVertex(BLANK, s.getBlankNodeLabel());
 	        	}
 	        	else if (s.isURI()) {
-	        		v1 = findOrCreateNew(URI, s.getURI());
+	        		v1 = findOrCreateNewVertex(URI, s.getURI());
 	        	}
-		        
-	        	//checks the object to create an edge
+
+	        	//checks if object is blank, literal or uri, and if new vertex should be created
 		        if (o.isLiteral()) {
+		        	System.out.println("o.getLexicalForm() = " +  o.getLiteralLexicalForm());
 		        	v2 = pg.addVertex(T.id, generateVertexId(), KIND, LITERAL, LITERAL, o.getLiteralLexicalForm());
 		        }
 		        else if (o.isURI()) {
-		        	v2 = findOrCreateNew(URI, o.getURI());
+		        	v2 = findOrCreateNewVertex(URI, o.getURI());
 		        }
-		        //add the predicate as edge in the graph, using the predicate as label
-		        v1.addEdge(p.toString(), v2);
+		        else if (o.isBlank()) {
+		        	v2 = findOrCreateNewVertex(BLANK, o.getBlankNodeLabel());
+		        }
+		        
+		        GraphTraversalSource g = pg.traversal();
+		        boolean edgeAlreadyExist = g.V(v1).out(p.getURI()).is(v2).hasNext();
+		        
+		        //create edge if not already existing, else do nothing since no meta should be added
+		        if (! edgeAlreadyExist) {
+		        	Edge newEdge = v1.addEdge(p.getURI(), v2);
+		        	edgeList.add(newEdge);
+		        }  
 	        }
 		}
 		return pg;
 	}
 	
-	public Vertex findOrCreateNew(String kind, String value) {
+	protected Vertex findOrCreateNewVertex(String kind, String value) {
 		GraphTraversalSource g = pg.traversal();
 		Optional<Vertex> v = g.V().has(kind, value).tryNext();
 		if (v.isPresent()) {
@@ -167,10 +211,4 @@ public class RDFStar2TinkerpopPG
 		return "v" +  ++vertexId;
 	}
 	
-	protected String generateEdgeId()
-	{
-		return "e" +  ++edgeId;
-	}
-	
-
 }

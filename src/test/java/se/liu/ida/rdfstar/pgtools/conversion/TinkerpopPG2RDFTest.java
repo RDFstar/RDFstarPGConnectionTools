@@ -127,4 +127,26 @@ public class TinkerpopPG2RDFTest {
 		assertEquals( 8, jg4.size() );
 	}
 	
+	@Test
+	public void notEdgeUnique()
+	{
+		//create tinkerpop-graph
+		org.apache.tinkerpop.gremlin.structure.Graph pg4 = TinkerGraph.open();		
+		Vertex v1 = pg4.addVertex(T.label, "bob", "name", "Bob", "age", "22");
+		Vertex v2 = pg4.addVertex(T.label, "alice", "name", "Alice", "age", "25");
+		v1.addEdge("knows", v2);
+		v1.addEdge("knows", v2, "certainty", 0.8);
+		 boolean thrown = false;
+
+		  try {
+				org.apache.jena.graph.Graph jg4 = new TinkerpopPG2RDFStar().convert(pg4);
+		  } catch (IllegalArgumentException e) {
+		    thrown = true;
+		  }
+
+		  assertTrue(thrown);
+			
+		}
+	
+	
 }
