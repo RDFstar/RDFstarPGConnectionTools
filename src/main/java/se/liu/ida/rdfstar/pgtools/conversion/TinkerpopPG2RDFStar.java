@@ -1,7 +1,8 @@
 package se.liu.ida.rdfstar.pgtools.conversion;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Node_Triple;
@@ -11,6 +12,7 @@ import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Property;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 
@@ -30,21 +32,18 @@ public class TinkerpopPG2RDFStar {
 		GraphTraversalSource traversal = pg.traversal();
 		
 		//check for edge uniqueness
-		ArrayList<ArrayList<Object>> edgeList = new ArrayList<ArrayList<Object>>();
-		Iterator<Edge> itE = traversal.E();
-		while (itE.hasNext()) {
-			Edge e = itE.next();
-			ArrayList<Object> edge = new ArrayList<Object>();
-			edge.add(e.label());
-			edge.add(e.inVertex());
-			edge.add(e.outVertex());
-			for (ArrayList<Object> list: edgeList) {
-				if (edge.equals(list)) {
-					throw new IllegalArgumentException("Cannot translate, input graph must be edge-unique");
+		Iterator<Vertex> itV1 = traversal.V();
+		while (itV1.hasNext()) {
+			Vertex v = itV1.next();
+			GraphTraversal<Vertex, Edge> edges = traversal.V(v).outE();
+			while (edges.hasNext()) {
+				Edge e = edges.next();
+				if (traversal.V(v).outE(e.label()).toList().size() > 1) {
+					throw new IllegalArgumentException("cannot convert graph, must be edge unique");
 				}
 			}
-			edgeList.add(edge);
 		}
+		
 		Iterator<Vertex> itV = traversal.V();
 		 while (itV.hasNext()) {
 			 Vertex v = itV.next();

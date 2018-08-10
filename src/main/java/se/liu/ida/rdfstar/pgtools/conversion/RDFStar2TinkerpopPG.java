@@ -140,7 +140,6 @@ public class RDFStar2TinkerpopPG
 		        
 		        GraphTraversalSource g = pg.traversal();
 		        boolean edgeAlreadyExist = g.V(v1).out(metaP.getURI()).is(v2).hasNext();
-		        
 		        //create edge if not already existing, else add property to existing edge
 		        if (! edgeAlreadyExist) {
 		        	Edge newEdge = v1.addEdge(metaP.getURI(), v2, p.getURI(), objectValue);
@@ -148,7 +147,7 @@ public class RDFStar2TinkerpopPG
 		        }
 		        else {
 		        	for (Edge e : edgeList) {
-		        		if (e.inVertex() == v1 && e.outVertex() == v2) {
+		        		if (e.inVertex() == v2 && e.outVertex() == v1) {
 		        			if (e.label() == metaP.getURI()) {
 		        					e.property(p.getURI(), objectValue);
 		        				}
@@ -170,7 +169,6 @@ public class RDFStar2TinkerpopPG
 
 	        	//checks if object is blank, literal or uri, and if new vertex should be created
 		        if (o.isLiteral()) {
-		        	System.out.println("o.getLexicalForm() = " +  o.getLiteralLexicalForm());
 		        	v2 = pg.addVertex(T.id, generateVertexId(), KIND, LITERAL, LITERAL, o.getLiteralLexicalForm());
 		        }
 		        else if (o.isURI()) {
@@ -182,7 +180,6 @@ public class RDFStar2TinkerpopPG
 		        
 		        GraphTraversalSource g = pg.traversal();
 		        boolean edgeAlreadyExist = g.V(v1).out(p.getURI()).is(v2).hasNext();
-		        
 		        //create edge if not already existing, else do nothing since no meta should be added
 		        if (! edgeAlreadyExist) {
 		        	Edge newEdge = v1.addEdge(p.getURI(), v2);
@@ -197,7 +194,6 @@ public class RDFStar2TinkerpopPG
 		GraphTraversalSource g = pg.traversal();
 		Optional<Vertex> v = g.V().has(kind, value).tryNext();
 		if (v.isPresent()) {
-			System.out.println("Found existing vertex already!");
 			return v.get();
 		}
 		else {

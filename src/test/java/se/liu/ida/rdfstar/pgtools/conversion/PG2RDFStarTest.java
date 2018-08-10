@@ -12,6 +12,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Node_Triple;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.riot.RiotException;
@@ -41,9 +43,8 @@ public class PG2RDFStarTest
 
 		assertEquals( 6, g.size() );
 		checkNestedTriples(g, 0);
-
 	}
-	
+		
 	@Test
 	public void metadata() throws IOException
 	{

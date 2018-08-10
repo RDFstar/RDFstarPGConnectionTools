@@ -197,6 +197,38 @@ public class RDFStar2TinkerpopPGTest
 	}
 	
 	@Test
+	public void oneSimpleAndTwoMetaSameEdge() {
+		final Graph g = convertTTL2PG("onesimpleandtwometasameedge.ttls");
+		assert(IteratorUtils.count(g.vertices()) == 2);
+		assert(IteratorUtils.count(g.edges()) == 1);
+		
+		GraphTraversalSource traversalG = g.traversal();
+		//check for correct properties for vertices
+		assertTrue(traversalG.V("v1").has("URI", "http://example.com/coolio").hasNext());
+		assertTrue(traversalG.V("v2").has("URI", "http://example.com/cal").hasNext());
+		
+		//check for correct edges
+		boolean hasOutEdge1 = traversalG.V("v1").outE("http://xmlns.com/foaf/0.1/knows").hasNext();
+		assertTrue(hasOutEdge1);
+
+		
+		boolean hasInEdge1 = traversalG.V("v2").inE("http://xmlns.com/foaf/0.1/knows").hasNext();
+		assertTrue(hasInEdge1);
+
+		
+		//check for correct egde properties
+		Optional<Edge> e = traversalG.V("v1").outE("http://xmlns.com/foaf/0.1/knows").tryNext();
+		Edge edge = e.get();
+		System.out.println(edge);
+		Property<Object> key = edge.properties("http://purl.org/dc/terms/certainty").next();
+		System.out.println(key);
+		assertEquals(key.value(), "0.8");
+		Property<Object> key2 = edge.properties("http://purl.org/dc/terms/source").next();
+		System.out.println(key2);
+		assertEquals(key2.value(), "http://example.net/listing.html");
+	}
+	
+	@Test
 	public void onenestedandonenotnested()
 	{
 		final Graph g = convertTTL2PG("onenestedandonenotnested.ttls");

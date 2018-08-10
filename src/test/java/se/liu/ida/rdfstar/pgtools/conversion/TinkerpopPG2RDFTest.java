@@ -117,7 +117,7 @@ public class TinkerpopPG2RDFTest {
 		Vertex v1 = pg4.addVertex(T.label, "bob", "name", "Bob", "age", "22");
 		Vertex v2 = pg4.addVertex(T.label, "alice", "name", "Alice", "age", "25");
 		Vertex v3 = pg4.addVertex(T.label, "ebba", "name", "Ebba", "age", "21");
-		v1.addEdge("knows", v2);
+		v1.addEdge("influencedBy", v2);
 		v1.addEdge("knows", v3, "certainty", 0.8);
 		
 		//convert
