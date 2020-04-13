@@ -15,7 +15,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.graph.Graph;
 
-import se.liu.ida.rdfstar.tools.parser.lang.LangTurtleStarTest;
+import se.liu.ida.rdfstar.tools.graph.RDFStarUtils;
 
 
 /**
@@ -62,7 +62,7 @@ public class PG2RDFStarTest
 
 		System.out.println(result);
 
-		final Graph g = LangTurtleStarTest.createGraphFromTurtleStarSnippet(result);
+		final Graph g = RDFStarUtils.createGraphFromTurtleStarSnippet(result);
 		return g;
 	}
 	
